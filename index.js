@@ -13,7 +13,7 @@ const app = express();
 app.use(express.json());
 
 // Rota POST para adicionar tarefas
-app.post('/api/send-email', async (req, res) => { 
+app.post('/api/send-message', async (req, res) => { 
     const { recipient, message } = req.body;
 
     if (!recipient || !message) { 
