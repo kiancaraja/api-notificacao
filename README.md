@@ -1,4 +1,4 @@
-# 🔔 API de Mensageira Assíncrona (Produtor/Worker - Node.js e BullMQ)
+# 🔔 API de Mensageira Assíncrona (Produtor/Worker - Node.js e BullMQ) (Desenvolvimento Concluído)
 
 ## Contexto e Objetivo
 Esta API foi desenvolvida para solucionar problemas de **bloqueio** e **falha de escalabilidade** em sistemas que precisam enviar um alto volume de notificações (e-mail, WhatsApp, SMS). Em vez de processar o envio imediatamente (o que "trava" a API), ela enfileira o trabalho para ser processado de forma lenta e segura. Este padrão é essencial para a **resiliência do sistema**.
