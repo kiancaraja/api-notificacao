@@ -1,17 +1,17 @@
 {
   "name": "api-notificacao",
   "version": "1.0.0",
-  "description": "",
+  "description": "API Produtor/Worker para Notificações",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:api": "node api/index.js",
+    "start:worker": "node worker/notificationWorker.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bullmq": "^5.65.1",
-    "express": "^5.2.1",
-    "redis": "^5.10.0"
+    "express": "^4.19.2",
+    "bullmq": "^5.18.0"
   }
 }

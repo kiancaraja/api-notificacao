@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:6-alpine 
+    container_name: redis-notifications
+    ports:
+      - "6379:6379" 
+    command: redis-server --appendonly yes 
+    volumes:
+      - redis-data:/data 
+    restart: always 
+
+volumes:
+  redis-data:
