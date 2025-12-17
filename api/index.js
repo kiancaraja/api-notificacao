@@ -1,46 +1,45 @@
 const express = require('express');
 const { Queue } = require('bullmq');
+const { createBullBoard } = require('@bull-board/api');
+const { BullMQAdapter } = require('@bull-board/api/bullMQAdapter');
+const { ExpressAdapter } = require('@bull-board/express');
 
 const app = express();
 app.use(express.json());
 
-// Conexão com o Redis (a mesma usada no Worker)
 const connection = {
     host: 'localhost',
     port: 6379,
 };
 
-// Cria a fila de notificação (o nome deve ser o mesmo usado no Worker)
+// Conexão com a fila que você já criou
 const notificationQueue = new Queue('notification-queue', { connection });
 
-// Endpoint para enviar notificações
+// --- CONFIGURAÇÃO DO DASHBOARD (BULL BOARD) ---
+const serverAdapter = new ExpressAdapter();
+serverAdapter.setBasePath('/admin/queues');
+
+createBullBoard({
+    queues: [new BullMQAdapter(notificationQueue)],
+    serverAdapter: serverAdapter,
+});
+
+// Adiciona a rota do painel na nossa API
+app.use('/admin/queues', serverAdapter.getRouter());
+// ----------------------------------------------
+
 app.post('/api/send-notification', async (req, res) => {
     const { userId, message } = req.body;
-
-    if (!userId || !message) {
-        return res.status(400).send({ error: 'Faltam userId e message' });
-    }
-
     try {
-        // Adiciona o job à fila
-        const job = await notificationQueue.add('notificationJob', {
-            userId,
-            message,
-            timestamp: new Date().toISOString()
-        });
-
-        console.log(`[API] Job enfileirado com ID: ${job.id} para o usuário ${userId}`);
-        res.status(200).send({
-            message: 'Notificação enfileirada com sucesso!',
-            jobId: job.id
-        });
+        const job = await notificationQueue.add('notificationJob', { userId, message });
+        res.status(200).send({ message: 'Notificação enfileirada!', jobId: job.id });
     } catch (error) {
-        console.error("[API] Erro ao adicionar job na fila:", error);
-        res.status(500).send({ error: 'Erro interno ao enfileirar notificação.' });
+        res.status(500).send({ error: 'Erro ao enfileirar' });
     }
 });
 
 const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(`Produtor Express rodando na porta ${PORT}`);
+    console.log(`🚀 API rodando na porta ${PORT}`);
+    console.log(`📊 Dashboard disponível em: http://localhost:${PORT}/admin/queues`);
 });
