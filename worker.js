@@ -1,43 +1,42 @@
-// worker/notificationWorker.js
-
 const { Worker } = require('bullmq');
+const nodemailer = require('nodemailer');
 
-// Configuração da conexão com o Redis
-// Nota: Se rodar local no terminal, use '127.0.0.1'. Se fosse dentro do Docker, seria 'redis'.
 const connection = {
-  host: '127.0.0.1', 
-  port: 6379,
+    host: 'localhost',
+    port: 6379,
 };
 
-// Simulando uma função de envio de e-mail (demorada)
-const sleep = (t) => new Promise((resolve) => setTimeout(resolve, t));
+// Função para enviar o e-mail
+async function sendEmail(jobData) {
+    // Criando uma conta de teste no Ethereal (apenas para desenvolvimento)
+    let testAccount = await nodemailer.createTestAccount();
 
-// 1. Cria o Worker
-const worker = new Worker('notifications', async (job) => {
-    // Esta função é executada para CADA job que chega na fila
-    console.log(`[WORKER] Processando Job ID ${job.id} | Usuário: ${job.data.userId}`);
-    
-    // Simula o tempo de envio de um e-mail (3 segundos)
-    await sleep(3000); 
-    
-    console.log(`[WORKER] Job ID ${job.id} concluído! Notificação enviada: "${job.data.message}"`);
-  }, 
-  { connection }
-);
-
-// ------------------------------------------------------------------
-// 🎯 O DIFERENCIAL SÊNIOR: Graceful Shutdown (SIGTERM)
-// ------------------------------------------------------------------
-// Quando o ECS/Fargate (ou Docker) mandar parar, o Worker não morre na hora.
-// Ele termina o que está fazendo primeiro.
-
-process.on('SIGTERM', async () => {
-  console.log('🛑 SIGTERM recebido. Fechando o Worker de forma graciosa...');
-  
-  await worker.close(); // O BullMQ espera os jobs ativos terminarem
-  
-  console.log('✅ Worker encerrado com sucesso. Tchau!');
-  process.exit(0);
+   const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'emsmms42@gmail.com',
+        pass: 'u-ua. as. sx x u-ud. db. bu-u u-uo thei. ia. a k- kli. im. m' // Sem espaços!
+    },
 });
 
-console.log('🚀 Worker de Notificações INICIADO. Aguardando jobs...');
+let info = await transporter.sendMail({
+    from: '"Eliene - API Notificação" <emsmms42@gmail.com>',
+    to: "emsmms42@gmail.com", // Enviando para você mesma para testar
+    subject: "TESTE REAL: Notificação via BullMQ! 🚀",
+    text: jobData.message,
+    html: `<b>Olá Eliene!</b><p>Sua fila funcionou! Mensagem: ${jobData.message}</p>`,
+});
+
+        console.log("✉️ E-mail enviado: %s", info.messageId);
+    console.log("🔗 Visualize o e-mail aqui: %s", nodemailer.getTestMessageUrl(info));
+}
+
+const worker = new Worker('notification-queue', async (job) => {
+    console.log(`👷 Processando job ${job.id}...`);
+    
+    // Agora o worker realmente faz algo útil: envia um e-mail!
+    await sendEmail(job.data);
+    
+}, { connection });
+
+console.log('👷 Worker de e-mail rodando...');
